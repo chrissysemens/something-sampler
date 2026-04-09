@@ -1,7 +1,12 @@
 import { Pad } from 'components/device/pad/pad';
 import { View } from 'react-native';
+import { useButtonState } from 'state/useButtonState';
+import { useSequencerStore } from 'state/useSequencerState';
 
 const Functions = () => {
+  const { isPlaying, setPlaying } = useSequencerStore();
+  const { held } = useButtonState();
+
   return (
     <View
       style={{
@@ -12,17 +17,17 @@ const Functions = () => {
     >
       <Pad
         id={'play'}
-        active={false}
+        active={isPlaying || held === 'play'}
         label={'PLAY'}
         width={87}
         height={46}
         showIndicator={false}
         indicatorOn={false}
-        onPress={() => console.log('PLAY')}
+        onPress={() => setPlaying(!isPlaying)}
       />
       <Pad
         id={'record'}
-        active={false}
+        active={held === 'record'}
         label={'REC'}
         width={87}
         height={46}
@@ -32,7 +37,7 @@ const Functions = () => {
       />
       <Pad
         id={'fx'}
-        active={false}
+        active={held === 'fx'}
         label={'FX'}
         width={87}
         height={46}
@@ -42,7 +47,7 @@ const Functions = () => {
       />
       <Pad
         id={'func'}
-        active={false}
+        active={held === 'func'}
         label={'FUNC'}
         width={87}
         height={46}

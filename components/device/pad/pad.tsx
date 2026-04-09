@@ -24,6 +24,8 @@ type PadProps = {
   indicatorOn?: boolean;
 };
 
+const TAP_MAX_DURATION_MS = 100000;
+
 export function Pad({
   id,
   active = false,
@@ -40,6 +42,7 @@ export function Pad({
   const { setPressed, setHeld, clearPressed, clearHeld } = useButtonState();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
+  const didLongPress = useSharedValue(false);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -66,29 +69,34 @@ export function Pad({
   const onPadPressOut = React.useCallback(() => {
     handlePressOut();
     clearPressed(id);
-    clearHeld(id);
-  }, [clearHeld, clearPressed, id]);
+  }, [clearPressed, id]);
 
   const onPadLongPress = React.useCallback(() => {
     setHeld(id);
   }, [id, setHeld]);
 
+  const onPadLongPressFinalize = React.useCallback(() => {
+    clearHeld(id);
+  }, [clearHeld, id]);
+
   const tapGesture = React.useMemo(
     () =>
       Gesture.Tap()
-        .maxDuration(Number.MAX_SAFE_INTEGER)
+        .maxDuration(TAP_MAX_DURATION_MS)
         .onBegin(() => {
+          didLongPress.value = false;
           runOnJS(onPadPressIn)();
         })
         .onEnd((_event, success) => {
-          if (success && onPress && !onPressInAction) {
+          if (success && !didLongPress.value && onPress && !onPressInAction) {
             runOnJS(onPress)();
           }
         })
         .onFinalize(() => {
+          didLongPress.value = false;
           runOnJS(onPadPressOut)();
         }),
-    [onPadPressIn, onPadPressOut, onPress, onPressInAction],
+    [didLongPress, onPadPressIn, onPadPressOut, onPress, onPressInAction],
   );
 
   const longPressGesture = React.useMemo(
@@ -97,9 +105,13 @@ export function Pad({
         .enabled(enableHold)
         .minDuration(150)
         .onStart(() => {
+          didLongPress.value = true;
           runOnJS(onPadLongPress)();
+        })
+        .onFinalize(() => {
+          runOnJS(onPadLongPressFinalize)();
         }),
-    [enableHold, onPadLongPress],
+    [didLongPress, enableHold, onPadLongPress, onPadLongPressFinalize],
   );
 
   const padGesture = React.useMemo(

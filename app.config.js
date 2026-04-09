@@ -51,6 +51,7 @@ export default ({ config }) => {
       ['expo-router', storybookEnabled ? { root: './src/storybook-app' } : {}],
       'expo-localization',
       '@react-native-community/datetimepicker',
+      'react-native-audio-api'
     ],
   };
 };

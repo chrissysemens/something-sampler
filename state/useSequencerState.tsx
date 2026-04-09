@@ -36,7 +36,7 @@ const initialPads: Pad[] = Array.from({ length: PAD_COUNT }, (_, index) => ({
 
 export const useSequencerStore = create<SequencerState>()((set) => ({
   pads: initialPads,
-  currentStep: 0,
+  currentStep: -1,
   isPlaying: false,
   bpm: 120,
   volume: 0.8,

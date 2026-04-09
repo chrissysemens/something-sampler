@@ -9,7 +9,7 @@ type ModeState = {
   setActivePad: (padId: number | string | null) => void;
 };
 
-export const useModeState= create<ModeState>()((set) => ({
+export const useModeState = create<ModeState>()((set) => ({
   activeMode: null,
   setActiveMode: (mode) => set({ activeMode: mode }),
   activePad: null,

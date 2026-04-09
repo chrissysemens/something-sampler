@@ -1,4 +1,5 @@
 import { Pad } from 'components/device/pad/pad';
+import { playSampleFromUri } from 'audio/audioEngine';
 import React from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { View } from 'react-native';
@@ -17,12 +18,20 @@ const ROW_COUNT = SEQUENCER_STEP_COUNT / STEPS_PER_ROW;
 const Sequencer = () => {
   const { theme } = useTheme();
   const { held } = useButtonState();
-  const { pads, bpm, currentStep, advanceStep, toggleStep, assignSound } =
-    useSequencerStore();
+  const {
+    pads,
+    bpm,
+    isPlaying,
+    currentStep,
+    advanceStep,
+    toggleStep,
+    assignSound,
+  } = useSequencerStore();
 
-  const { setActiveMode, setActivePad } = useModeState();
+  const { activePad, setActiveMode, setActivePad } = useModeState();
 
-  const selectedPad = pads[0];
+  const selectedPad =
+    typeof activePad === 'number' ? (pads[activePad] ?? pads[0]) : pads[0];
 
   const stepRows = Array.from({ length: ROW_COUNT }, (_, rowIndex) =>
     Array.from({ length: STEPS_PER_ROW }, (_, columnIndex) => {
@@ -31,14 +40,38 @@ const Sequencer = () => {
   );
 
   React.useEffect(() => {
+    if (!isPlaying) {
+      return;
+    }
+
     const stepDurationMs = 60000 / bpm;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let expectedAt = performance.now() + stepDurationMs;
 
-    const intervalId = setInterval(() => {
+    const tick = () => {
+      const { currentStep: storeCurrentStep, pads: storePads } =
+        useSequencerStore.getState();
+      const nextStep = (storeCurrentStep + 1) % SEQUENCER_STEP_COUNT;
+
+      storePads.forEach((pad) => {
+        if (!pad.soundId || !pad.pattern[nextStep]) {
+          return;
+        }
+        void playSampleFromUri(pad.soundId);
+      });
+
       advanceStep();
-    }, stepDurationMs);
 
-    return () => clearInterval(intervalId);
-  }, [advanceStep, bpm]);
+      // Measure drift and correct next tick timing
+      const drift = performance.now() - expectedAt;
+      expectedAt += stepDurationMs;
+      timeoutId = setTimeout(tick, Math.max(0, stepDurationMs - drift));
+    };
+
+    timeoutId = setTimeout(tick, stepDurationMs);
+
+    return () => clearTimeout(timeoutId);
+  }, [advanceStep, bpm, isPlaying]);
 
   if (!selectedPad) {
     return null;
@@ -72,13 +105,24 @@ const Sequencer = () => {
         void assignSampleFromPicker(stepIndex);
         break;
       case 'play':
-        console.log('PLAY action on step', stepIndex + 1);
+        setActiveMode('playback');
+        setActivePad(stepIndex);
+        {
+          const sampleUri = pads[stepIndex]?.soundId;
+
+          if (!sampleUri) {
+            return;
+          }
+
+          void playSampleFromUri(sampleUri);
+        }
         break;
       case 'fx':
         console.log('FX action on step', stepIndex + 1);
         break;
       case 'func':
-        console.log('FUNC action on step', stepIndex + 1);
+        setActiveMode('program');
+        setActivePad(stepIndex);
         break;
       default:
         toggleStep(selectedPad.id, stepIndex);
