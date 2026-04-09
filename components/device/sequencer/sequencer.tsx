@@ -1,5 +1,11 @@
 import { Pad } from 'components/device/pad/pad';
-import { playSampleFromUri } from 'audio/audioEngine';
+import {
+  getAudioContextCurrentTime,
+  playSampleFromUri,
+  preloadSampleUri,
+  scheduleSampleAtTime,
+  setMasterGain,
+} from 'audio/audioEngine';
 import React from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { View } from 'react-native';
@@ -22,6 +28,7 @@ const Sequencer = () => {
     pads,
     bpm,
     isPlaying,
+    volume,
     currentStep,
     advanceStep,
     toggleStep,
@@ -44,34 +51,54 @@ const Sequencer = () => {
       return;
     }
 
-    const stepDurationMs = 60000 / bpm;
+    const stepDurationSec = 60 / bpm;
+    // Lookahead: schedule audio this far ahead of the audio clock (seconds).
+    // Large enough to survive a JS GC pause; small enough for responsive UI.
+    const LOOKAHEAD_SEC = 0.1;
+
     let timeoutId: ReturnType<typeof setTimeout>;
-    let expectedAt = performance.now() + stepDurationMs;
+    // nextStepAudioTime is the AudioContext time when the next step should fire.
+    let nextStepAudioTime = getAudioContextCurrentTime() + stepDurationSec;
 
     const tick = () => {
       const { currentStep: storeCurrentStep, pads: storePads } =
         useSequencerStore.getState();
       const nextStep = (storeCurrentStep + 1) % SEQUENCER_STEP_COUNT;
 
+      // Schedule all samples to fire at the precise audio clock time.
       storePads.forEach((pad) => {
         if (!pad.soundId || !pad.pattern[nextStep]) {
           return;
         }
-        void playSampleFromUri(pad.soundId);
+        scheduleSampleAtTime(pad.soundId, nextStepAudioTime);
       });
 
-      advanceStep();
+      // Advance the visual step indicator slightly before the audio fires.
+      const msUntilStep = Math.max(
+        0,
+        (nextStepAudioTime - getAudioContextCurrentTime()) * 1000,
+      );
+      setTimeout(() => advanceStep(), msUntilStep);
 
-      // Measure drift and correct next tick timing
-      const drift = performance.now() - expectedAt;
-      expectedAt += stepDurationMs;
-      timeoutId = setTimeout(tick, Math.max(0, stepDurationMs - drift));
+      nextStepAudioTime += stepDurationSec;
+
+      // Schedule next JS tick with a lookahead so we always stay ahead.
+      const msUntilNextSchedule = Math.max(
+        0,
+        (nextStepAudioTime - LOOKAHEAD_SEC - getAudioContextCurrentTime()) *
+          1000,
+      );
+      timeoutId = setTimeout(tick, msUntilNextSchedule);
     };
 
-    timeoutId = setTimeout(tick, stepDurationMs);
+    timeoutId = setTimeout(tick, (stepDurationSec - LOOKAHEAD_SEC) * 1000);
 
     return () => clearTimeout(timeoutId);
   }, [advanceStep, bpm, isPlaying]);
+
+  React.useEffect(() => {
+    setMasterGain(volume);
+  }, [volume]);
 
   if (!selectedPad) {
     return null;
@@ -95,6 +122,7 @@ const Sequencer = () => {
     }
 
     assignSound(padId, selectedAsset.uri);
+    void preloadSampleUri(selectedAsset.uri);
   };
 
   const handleStepPress = (stepIndex: number) => {
