@@ -35,18 +35,13 @@ export function Row({
           alignItems: align,
           justifyContent: justify,
           flexWrap: wrap ? 'wrap' : 'nowrap',
+          columnGap: theme.spacing[gap],
+          rowGap: wrap ? theme.spacing[gap] : 0,
         },
         style,
       ]}
     >
-      {kids.map((child, i) => (
-        <View
-          key={i}
-          style={i === 0 ? undefined : { marginLeft: theme.spacing[gap] }}
-        >
-          {child}
-        </View>
-      ))}
+      {kids}
     </View>
   );
 }

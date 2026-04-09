@@ -1,4 +1,4 @@
-# expo-template-cse
+# something-sampler
 
 A personal Expo starter kit with a lightweight design system, Expo Router, Zustand state, Storybook, and Jest tests. Designed as a clean, opinionated base for future apps.
 

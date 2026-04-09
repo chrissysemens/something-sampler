@@ -42,6 +42,7 @@ const Button = ({
 
   const pressed = useSharedValue(0);
   const isDisabled = disabled || loading;
+  const isVisuallyDisabled = disabled;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: 1 - pressed.value * 0.02 }],
@@ -66,39 +67,10 @@ const Button = ({
     lg: theme.spacing[3],
   };
 
-  const variantStyle = (() => {
-    switch (variant) {
-      case 'secondary':
-        return {
-          backgroundcolours: theme.colours.surface2,
-          bordercolours: theme.colours.border,
-          borderWidth: StyleSheet.hairlineWidth,
-          textcolours: theme.colours.text,
-        };
-      case 'ghost':
-        return {
-          backgroundcolours: 'transparent',
-          bordercolours: 'transparent',
-          borderWidth: 0,
-          textcolours: theme.colours.primary,
-        };
-      case 'danger':
-        return {
-          backgroundcolours: theme.colours.danger,
-          bordercolours: 'transparent',
-          borderWidth: 0,
-          textcolours: theme.colours.white,
-        };
-      case 'primary':
-      default:
-        return {
-          backgroundcolours: theme.colours.primary,
-          bordercolours: 'transparent',
-          borderWidth: 0,
-          textcolours: theme.colours.white,
-        };
-    }
-  })();
+  const variantStyle = theme.components.button.variants[variant];
+  const disabledStyle = theme.components.button.disabled;
+
+  const resolvedStyle = isVisuallyDisabled ? disabledStyle : variantStyle;
 
   return (
     <AnimatedPressable
@@ -115,12 +87,12 @@ const Button = ({
           paddingHorizontal: paddingsX[size],
           paddingVertical: paddingsY[size],
           borderRadius: theme.components.controlRadius,
-          backgroundcolours: variantStyle.backgroundcolours,
-          bordercolours: variantStyle.bordercolours,
-          borderWidth: variantStyle.borderWidth,
+          backgroundColor: resolvedStyle.backgroundColor,
+          borderColor: resolvedStyle.borderColor,
+          borderWidth: resolvedStyle.borderWidth,
           minWidth: fullWidth ? undefined : 180,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
-          opacity: isDisabled ? 0.6 : 1,
+          opacity: loading ? 0.8 : 1,
         },
         style,
       ]}
@@ -138,7 +110,7 @@ const Button = ({
       {loading ? (
         <Spinner />
       ) : (
-        <Text variant="bodyStrong" style={{ color: variantStyle.textcolours }}>
+        <Text variant="bodyStrong" style={{ color: resolvedStyle.textColor }}>
           {text}
         </Text>
       )}

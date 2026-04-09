@@ -33,11 +33,13 @@ const Input = forwardRef<RNTextInput, Props>(
     const { theme } = useTheme();
     const [focused, setFocused] = useState(false);
 
+    const inputTheme = theme.components.input;
+
     const borderColor = error
-      ? theme.colours.danger
+      ? inputTheme.borderError
       : focused
-        ? theme.colours.primary
-        : theme.colours.border;
+        ? inputTheme.borderFocused
+        : inputTheme.borderDefault;
 
     return (
       <View style={[styles.wrapper, containerStyle]}>
@@ -57,7 +59,7 @@ const Input = forwardRef<RNTextInput, Props>(
           testID="text-input"
           accessibilityLabel="text-input"
           ref={ref}
-          placeholderTextColor={theme.colours.muted}
+          placeholderTextColor={inputTheme.placeholderColor}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);
@@ -73,9 +75,9 @@ const Input = forwardRef<RNTextInput, Props>(
               paddingHorizontal: theme.spacing[3],
               borderRadius: theme.components.controlRadius,
               backgroundColor: focused
-                ? theme.colours.surface2
-                : theme.colours.surface,
-              color: theme.colours.text,
+                ? inputTheme.backgroundColorFocused
+                : inputTheme.backgroundColor,
+              color: inputTheme.textColor,
               borderColor,
             },
             // Apply your default text style consistently

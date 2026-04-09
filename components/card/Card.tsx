@@ -28,21 +28,21 @@ export function Card({
     lg: theme.spacing[6], // 24
   };
 
+  const cardTheme = theme.components.card;
+
   const variantStyle = (() => {
     switch (variant) {
       case 'outlined':
         return {
-          backgroundColor: theme.colours.surface,
+          ...cardTheme.outlined,
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colours.border,
           shadowOpacity: 0,
           elevation: 0,
         } as const;
 
       case 'flat':
         return {
-          backgroundColor: theme.colours.surface2,
-          borderWidth: 0,
+          ...cardTheme.flat,
           shadowOpacity: 0,
           elevation: 0,
         } as const;
@@ -50,15 +50,8 @@ export function Card({
       case 'elevated':
       default:
         return {
-          backgroundColor: theme.colours.surface,
-          borderWidth: 0,
-          // iOS shadow
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          // Android elevation
-          elevation: 2,
+          ...cardTheme.elevated,
+          ...theme.elevation.md,
         } as const;
     }
   })();
@@ -84,6 +77,7 @@ export function Card({
 
 const styles = StyleSheet.create({
   base: {
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
+    width: '100%',
   },
 });

@@ -4,9 +4,9 @@ export default ({ config }) => {
   return {
     ...config,
 
-    name: 'CSE Template',
-    slug: 'cse-template',
-    scheme: 'cse-template',
+    name: 'Something sampler',
+    slug: 'something-sampler',
+    scheme: 'something-sampler',
     version: '1.0.0',
     orientation: 'portrait',
     userInterfaceStyle: 'light',
@@ -37,6 +37,14 @@ export default ({ config }) => {
 
     web: {
       favicon: './assets/favicon.png',
+    },
+
+    extra: {
+      ...(config.extra ?? {}),
+      eas: {
+        ...(config.extra?.eas ?? {}),
+        projectId: '8980c975-43e3-4f66-a063-ac3a87a392ce',
+      },
     },
 
     plugins: [

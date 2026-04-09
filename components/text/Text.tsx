@@ -17,7 +17,9 @@ type Props = RNTextProps & {
     | 'primary'
     | 'danger'
     | 'success'
-    | 'warning';
+    | 'warning'
+    | 'white'
+    | 'black';
   style?: StyleProp<TextStyle>;
 };
 
